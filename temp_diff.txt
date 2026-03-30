@@ -1,0 +1,150 @@
+diff --git a/README.md b/README.md
+index d3bd4d9..d6d78f5 100644
+--- a/README.md
++++ b/README.md
+@@ -39,9 +39,10 @@ This repository is built on a structured template designed specifically for long
+ 
+ Whenever you start a new conversation with an AI agent in this repository, you **must** prime it with the system rules.
+ 
+-Copy and paste this exact prompt as your first message to the AI:
++**Copy and paste this exact prompt as your first message to the AI:**
+ 
+-> **System Prompt Override:** You are operating in Project Cortex. Before doing anything else, you must read the AI-only documentation in `memory/README.md`, `memory/constraints/README.md`, and `code/README.md`. Strictly adhere to the nested calendar memory architecture and all system constraints defined in those files.
++> **System Prompt Override:** You are operating in Project Cortex. Before doing anything else, read the AI-only documentation in `memory/README.md`, `memory/constraints/architecture.md`, and `code/README.md`. 
++> **CRITICAL FIRST STEP:** Check the date of the last log file in the `memory/` directory. Then, review the current state of the `code/` directory (or use `git status` / `git diff`). If there are undocumented code changes that occurred after the last log, you MUST retroactively create a summary log for those changes before answering my first prompt. Acknowledge when you are ready.
+ 
+ When you finish your current session with an agent, tell it "that's it for today" (or something similar). This triggers the agent to summarize the conversation and create a log file in the `memory/` directory.
+ 
+diff --git a/code/README.md b/code/README.md
+index c20ef72..c24ff7b 100644
+--- a/code/README.md
++++ b/code/README.md
+@@ -1,12 +1,17 @@
+-# Code Workspace
++# Codebase Operating Rules
+ 
+-> [!IMPORTANT]  
+-> **[AI-ONLY SYSTEM INSTRUCTION]**  
+-> This file establishes the operational requirements for AI agents working in this repository.
++> **Important: [AI-ONLY SYSTEM INSTRUCTION]**
++> This file dictates how the AI agent should write, format, and manage code within the `code/` directory.
+ 
+-This is our shared workspace for all development.
++## 1. Coding Standards
++* **Clean Code:** Write modular, highly cohesive, and loosely coupled code. Keep functions small and focused on a single responsibility.
++* **No Dead Code:** Do not leave commented-out code blocks, unused variables, or `console.log` statements in final production files unless explicitly asked for debugging.
++* **Self-Documenting:** Prefer descriptive variable and function names over inline comments. Write comments only to explain *why* something complex was done, not *what* the code does.
+ 
+-## Documentation
++## 2. File Organization
++* Keep the directory structure flat where possible, but group files by feature rather than type (e.g., `/features/auth/` instead of throwing everything into one massive `/components/` folder).
++* Ensure all files follow a consistent naming convention (e.g., `kebab-case` for file names, `PascalCase` for React components).
+ 
+-- We will establish and continuously update documentation within this folder.
+-- All technical specifications, component documentation, and architecture diagrams should reside here.
++## 3. Execution & Testing
++* **Do Not Guess:** If a piece of code requires a specific environment variable or a database migration to run, you must inform the human user before considering the task complete.
++* **Refactoring:** When modifying existing code, ensure you do not break the surrounding context. If in doubt, output the planned changes for human review before applying them directly to the file.
+\ No newline at end of file
+diff --git a/code/gui/package-lock.json b/code/gui/package-lock.json
+index d5e7696..e970b2f 100644
+--- a/code/gui/package-lock.json
++++ b/code/gui/package-lock.json
+@@ -8,6 +8,7 @@
+       "name": "gui",
+       "version": "0.0.0",
+       "dependencies": {
++        "@google/generative-ai": "^0.24.1",
+         "lucide-react": "^1.7.0",
+         "react": "^19.2.4",
+         "react-dom": "^19.2.4"
+@@ -458,6 +459,15 @@
+         "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+       }
+     },
++    "node_modules/@google/generative-ai": {
++      "version": "0.24.1",
++      "resolved": "https://registry.npmjs.org/@google/generative-ai/-/generative-ai-0.24.1.tgz",
++      "integrity": "sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q==",
++      "license": "Apache-2.0",
++      "engines": {
++        "node": ">=18.0.0"
++      }
++    },
+     "node_modules/@humanfs/core": {
+       "version": "0.19.1",
+       "resolved": "https://registry.npmjs.org/@humanfs/core/-/core-0.19.1.tgz",
+diff --git a/code/gui/package.json b/code/gui/package.json
+index ec6a449..bcc8acf 100644
+--- a/code/gui/package.json
++++ b/code/gui/package.json
+@@ -10,6 +10,7 @@
+     "preview": "vite preview"
+   },
+   "dependencies": {
++    "@google/generative-ai": "^0.24.1",
+     "lucide-react": "^1.7.0",
+     "react": "^19.2.4",
+     "react-dom": "^19.2.4"
+diff --git a/memory/README.md b/memory/README.md
+index 066b406..b176f82 100644
+--- a/memory/README.md
++++ b/memory/README.md
+@@ -1,26 +1,39 @@
+ # Memory Context
+ 
+-> [!IMPORTANT]  
+-> **[AI-ONLY SYSTEM INSTRUCTION]**  
++> **Important: [AI-ONLY SYSTEM INSTRUCTION]**
+ > This file establishes the operational requirements for AI agents managing the project's memory. Humans do not need to read or edit this file unless fundamentally changing the rules of the template.
+-
+-This folder stores conversation logs organized into a nested calendar structure.
++> This folder stores conversation logs organized into a nested calendar structure, acting as the long-term memory for the AI.
+ 
+ ## Folder Hierarchy
+ 
+-- `memory/constraints/`: Holds system constraints that bypass all standard archiving rules.
+-- `memory/[YYYY]/`: The root folder for a given year.
+-  - `year_[YYYY].md`: Annual summary of the months.
+-  - `[MM]/`: Folder for the month (01 to 12).
+-    - `month_[YYYY]-[MM].md`: Monthly summary of the weeks.
+-    - `W[WW]/`: Folder for the week of the year (e.g., W14).
+-      - `week_[YYYY]-W[WW].md`: Weekly summary of the days.
+-      - `log_[YYYYMMDD]_[HHMM]_[Topic].md`: Up to 30 raw conversation logs for the active days inside this week.
++* **`memory/constraints/`**: Holds system constraints, architectural rules, and core states that bypass all standard archiving rules. These files are permanently kept.
++* **`memory/[YYYY]/`**: The root folder for a given year.
++    * `year_[YYYY].md`: Annual summary of the months.
++    * **`[MM]/`**: Folder for the month (01 to 12).
++        * `month_[YYYY]-[MM].md`: Monthly summary of the weeks.
++        * **`W[WW]/`**: Folder for the week of the year (e.g., W14).
++            * `week_[YYYY]-W[WW].md`: Weekly summary of the days.
++            * `log_[YYYYMMDD]_[HHMM]_[Topic].md`: Up to 30 raw conversation logs for the active days inside this week.
+ 
+ ## Rules & Processing
+ 
+-1. **Today (Raw Logs)**: Current work is stored directly in the active week's folder (`W[WW]`). Max 30 files are kept.
+-2. **Week (Summarization)**: At week's end, the active week's `log_` files are synthesized into `week_[YYYY]-W[WW].md` and raw files are deleted.
+-3. **Month (Summarization)**: At month's end, the `week_` summaries are synthesized into `month_[YYYY]-[MM].md` to preserve the broader context.
+-4. **Year (Summarization)**: At year's end, the `month_` summaries are synthesized into `year_[YYYY].md`.
+-5. **Overrides**: Files in `memory/constraints/` are permanently kept and never summarized or deleted.
++1.  **Today (Raw Logs):** Current work is stored directly in the active week's folder (`W[WW]`). A maximum of 30 log files are kept at any time.
++2.  **Week (Summarization):** At the week's end, the active week's `log_` files are synthesized into `week_[YYYY]-W[WW].md` and the raw log files are deleted.
++3.  **Month (Summarization):** At the month's end, the `week_` summaries are synthesized into `month_[YYYY]-[MM].md`.
++4.  **Year (Summarization):** At the year's end, the `month_` summaries are synthesized into `year_[YYYY].md`.
++5.  **Overrides:** Files in `memory/constraints/` are permanently kept and NEVER summarized or deleted by the calendar cleanup process.
++6.  **Session Termination Trigger:** Whenever the human user uses natural language indicating the end of a session (e.g., "that's it for today", "we are done", "wrap it up"), you MUST automatically initiate the memory rollup process, generating the required summaries and `log_` files in the `memory/` directory.
++7.  **Auto-Recovery (Missing Logs):** If you are initialized in a new session and detect that the `code/` directory contains updates, new files, or Git changes that are NOT documented in the most recent `log_` or `week_` file, you must assume the previous session ended without a proper rollup. You MUST immediately analyze the undocumented code changes and generate a retroactive `log_` file summarizing them before proceeding with new human requests.
++
++## Mandatory Formatting & Retention Rules
++
++To prevent knowledge loss and context degradation during the summarization process, you MUST strictly adhere to the following rules:
++
++* **Summary Structure:** All `week_`, `month_`, and `year_` summaries MUST be formatted using this exact Markdown structure:
++    * **Completed Goals:** High-level overview of what was built, fixed, or explored.
++    * **Technical Decisions:** Specific architectural choices, dependencies added/removed, or workarounds implemented (including the rationale).
++    * **Unresolved Issues & WIP:** Tasks started but not finished, known bugs, or blockers.
++    * **Context & Notes:** Any specific commands, environment variables, or quirks needed to run the current codebase.
++* **Critical Retention Tags:** If a raw daily log or a lower-level summary contains the tag `[CRITICAL_DECISION]` or `[ADR]`, the exact text associated with that tag MUST be copied verbatim into the higher-level summaries. Do not paraphrase or compress these points.
++* **Task Rollover:** Any incomplete tasks or open bugs mentioned in the active period MUST be explicitly listed under "Unresolved Issues & WIP" in the newly generated summary so the next AI session can immediately resume work.
++* **Knowledge Extraction:** While summarizing at the end of a week/month, if a core architectural pattern, tech stack, or global rule has changed, you MUST automatically update the relevant files in `memory/constraints/` to reflect the current state of the project.
+\ No newline at end of file

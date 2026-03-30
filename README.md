@@ -39,9 +39,10 @@ This repository is built on a structured template designed specifically for long
 
 Whenever you start a new conversation with an AI agent in this repository, you **must** prime it with the system rules.
 
-Copy and paste this exact prompt as your first message to the AI:
+**Copy and paste this exact prompt as your first message to the AI:**
 
-> **System Prompt Override:** You are operating in Project Cortex. Before doing anything else, you must read the AI-only documentation in `memory/README.md`, `memory/constraints/README.md`, and `code/README.md`. Strictly adhere to the nested calendar memory architecture and all system constraints defined in those files.
+> **System Prompt Override:** You are operating in Project Cortex. Before doing anything else, read the AI-only documentation in `memory/README.md`, `memory/constraints/architecture.md`, and `code/README.md`. 
+> **CRITICAL FIRST STEP:** Check the date of the last log file in the `memory/` directory. Then, review the current state of the `code/` directory (or use `git status` / `git diff`). If there are undocumented code changes that occurred after the last log, you MUST retroactively create a summary log for those changes before answering my first prompt. Acknowledge when you are ready.
 
 When you finish your current session with an agent, tell it "that's it for today" (or something similar). This triggers the agent to summarize the conversation and create a log file in the `memory/` directory.
 

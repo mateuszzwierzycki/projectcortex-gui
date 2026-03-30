@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { MessageSquare, Layout, Settings, Send, User, Bot, Code2, FolderTree } from 'lucide-react'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import './App.css'
 
 function App() {
@@ -8,21 +9,44 @@ function App() {
   ]);
   const [inputText, setInputText] = useState('');
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!inputText.trim()) return;
     
     setMessages(prev => [...prev, { id: Date.now(), sender: 'human', text: inputText }]);
+    const currentInput = inputText;
     setInputText('');
     
-    // Fake response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { 
-        id: Date.now(), 
-        sender: 'ai', 
-        text: 'I am accessing the workspace...' 
-      }]);
-    }, 1000);
+    // Add a loading message
+    const loadingId = Date.now() + 1;
+    setMessages(prev => [...prev, { 
+      id: loadingId, 
+      sender: 'ai', 
+      text: '...' 
+    }]);
+
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error('VITE_GEMINI_API_KEY environment variable is missing.');
+      }
+      
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+      
+      const result = await model.generateContent(currentInput);
+      const response = await result.response;
+      const text = response.text();
+      
+      setMessages(prev => prev.map(msg => 
+        msg.id === loadingId ? { ...msg, text: text } : msg
+      ));
+    } catch (error) {
+      console.error("Gemini API Error:", error);
+      setMessages(prev => prev.map(msg => 
+        msg.id === loadingId ? { ...msg, text: `Error: ${error.message}` } : msg
+      ));
+    }
   }
 
   return (
